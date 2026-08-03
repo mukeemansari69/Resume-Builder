@@ -1,1 +1,0 @@
-cout<<knapsack(0,nums)<<endl;
