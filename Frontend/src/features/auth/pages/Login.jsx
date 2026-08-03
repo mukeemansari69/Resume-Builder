@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { useAuth } from '../hooks/useAuth.js'
 
 const initialForm = {
   email: '',
@@ -9,11 +10,11 @@ const initialForm = {
 const Login = () => {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState({ type: '', message: '' })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { handleLogin, loading } = useAuth()
 
   const canSubmit = useMemo(
-    () => form.email.trim() && form.password.trim() && !isSubmitting,
-    [form.email, form.password, isSubmitting],
+    () => form.email.trim() && form.password.trim() && !loading,
+    [form.email, form.password, loading],
   )
 
   const handleChange = (event) => {
@@ -31,31 +32,15 @@ const Login = () => {
     }
 
     try {
-      setIsSubmitting(true)
-
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: form.email.trim(),
-          password: form.password,
-        }),
+      const data = await handleLogin({
+        email: form.email.trim(),
+        password: form.password,
       })
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed. Please try again.')
-      }
-
-      localStorage.setItem('resume_builder_user', JSON.stringify(data.user))
       setStatus({ type: 'success', message: data.message || 'User logged in successfully.' })
       setForm(initialForm)
     } catch (error) {
       setStatus({ type: 'error', message: error.message })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -128,8 +113,9 @@ const Login = () => {
               ) : null}
 
               <button className="auth-submit" type="submit" disabled={!canSubmit}>
-                <span>{isSubmitting ? 'Signing in' : 'Sign in'}</span>
+                <span>{loading ? 'Signing in' : 'Sign in'}</span>
                 <i aria-hidden="true" />
+                {loading ? <span className="auth-submit-spinner" aria-hidden="true" /> : null}
               </button>
             </form>
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { registerUser } from '../services/auth.api'
 
 const initialForm = {
   username: '',
@@ -34,24 +35,12 @@ const Register = () => {
     try {
       setIsSubmitting(true)
 
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          username: form.username.trim(),
-          email: form.email.trim(),
-          password: form.password,
-        }),
+      const data = await registerUser({
+        username: form.username.trim(),
+        email: form.email.trim(),
+        password: form.password,
       })
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed. Please try again.')
-      }
-
-      localStorage.setItem('resume_builder_user', JSON.stringify(data.user))
       setStatus({ type: 'success', message: data.message || 'User registered successfully.' })
       setForm(initialForm)
     } catch (error) {

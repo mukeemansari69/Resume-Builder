@@ -28,6 +28,7 @@ body,
 #root {
   min-height: 100%;
   width: 100%;
+  background-color: #4d6485;
 }
 
 body {
@@ -598,6 +599,70 @@ a {
   .field-group input,
   .auth-submit {
     border-radius: 0.85rem;
+  }
+}
+
+.app-shell-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(15, 23, 42, 0.96);
+  color: #fff;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.14);
+}
+
+.app-shell-subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.app-shell-logout {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.app-shell-logout:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(248, 250, 252, 0.18);
+}
+
+.app-shell-status {
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+  animation: messageIn 240ms ease both;
+}
+
+.app-shell-status.success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.app-shell-status.error {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.auth-submit-spinner {
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

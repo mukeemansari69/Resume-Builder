@@ -63,7 +63,13 @@ async function registerUserController(req, res) {
 
 
      /* and the tokken is set into the cookie */
-     res.cookie('token', token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
+     res.cookie('token', token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production'
+    });
      res.status(201).json({ message: "User registered successfully", 
       user: { id: user._id, username: user.username, email: user.email }
       });
@@ -108,7 +114,10 @@ async function registerUserController(req, res) {
     const token = jwt.sign({ id: user._id, username: user.username }, jwtSecret, { expiresIn: '1d' });
     res.cookie("token",token,{
       httpOnly:true,
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production'
     })
     res.status(200).json({
       message: "User logged in successfully",
@@ -145,7 +154,7 @@ async function logoutUserController(req, res) {
       }
     }
 
-    res.clearCookie('token', { httpOnly: true });
+    res.clearCookie('token', { httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.status(200).json({ message: 'User logged out successfully' });
   } catch (error) {
     console.error('Logout failed:', error.message);
