@@ -1,38 +1,51 @@
-import axios from 'axios'
-
+const AUTH_BASE_URL = '/api/auth'
 const AUTH_STORAGE_KEY = 'resume_builder_user'
 
-const authApi = axios.create({
-  baseURL: '/api/auth',
-  withCredentials: true,
-})
+const emitAuthUpdate = (user) => {
+  if (typeof window === 'undefined') {
+    return
+  }
 
-const getErrorMessage = (error, fallback) => {
-  return error?.response?.data?.message || error?.message || fallback
+  window.dispatchEvent(new CustomEvent('auth:updated', { detail: user || null }))
+}
+
+const parseResponse = async (response, fallbackMessage) => {
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.message || fallbackMessage)
+  }
+
+  return data
+}
+
+const authRequest = async (endpoint, options = {}, fallbackMessage) => {
+  const response = await fetch(`${AUTH_BASE_URL}${endpoint}`, {
+    credentials: 'include',
+    ...options,
+    headers: {
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...options.headers,
+    },
+  })
+
+  return parseResponse(response, fallbackMessage)
 }
 
 const saveAuthUser = (user) => {
   if (!user) {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('auth:updated'))
-    }
+    clearAuthUser()
     return null
   }
 
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user))
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('auth:updated', { detail: user }))
-  }
-
+  emitAuthUpdate(user)
   return user
 }
 
 export const clearAuthUser = () => {
   localStorage.removeItem(AUTH_STORAGE_KEY)
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('auth:updated'))
-  }
+  emitAuthUpdate(null)
 }
 
 export const getStoredAuthUser = () => {
@@ -44,49 +57,68 @@ export const getStoredAuthUser = () => {
   }
 }
 
-export async function registerUser(payload) {
-  try {
-    const { data } = await authApi.post('/register', payload)
-    saveAuthUser(data.user)
-    return data
-  } catch (error) {
-    throw new Error(getErrorMessage(error, 'Registration failed. Please try again.'), { cause: error })
-  }
+export async function registerUser({ username, email, password }) {
+  const data = await authRequest(
+    '/register',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      }),
+    },
+    'Registration failed. Please try again.',
+  )
+
+  saveAuthUser(data.user)
+  return data
 }
 
-export async function loginUser(payload) {
-  try {
-    const { data } = await authApi.post('/login', payload)
-    saveAuthUser(data.user)
-    return data
-  } catch (error) {
-    throw new Error(getErrorMessage(error, 'Login failed. Please try again.'), { cause: error })
-  }
+export async function loginUser({ email, password }) {
+  const data = await authRequest(
+    '/login',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        email: email.trim(),
+        password,
+      }),
+    },
+    'Login failed. Please try again.',
+  )
+
+  saveAuthUser(data.user)
+  return data
 }
 
 export async function logoutUser() {
-  try {
-    const { data } = await authApi.post('/logout')
-    clearAuthUser()
-    return data
-  } catch (error) {
-    clearAuthUser()
-    throw new Error(getErrorMessage(error, 'Logout failed. Please try again.'), { cause: error })
-  }
+  const data = await authRequest(
+    '/logout',
+    { method: 'POST' },
+    'Logout failed. Please try again.',
+  )
+
+  clearAuthUser()
+  return data
 }
 
 export async function getMe() {
   try {
-    const { data } = await authApi.get('/get-me')
+    const data = await authRequest(
+      '/get-me',
+      { method: 'GET' },
+      'Unable to load your account right now.',
+    )
+
     if (data?.user) {
       saveAuthUser(data.user)
     }
+
     return data
   } catch (error) {
-    if (error?.response?.status === 401 || error?.response?.status === 403) {
-      clearAuthUser()
-    }
-    throw new Error(getErrorMessage(error, 'Unable to load your account right now.'), { cause: error })
+    clearAuthUser()
+    throw error
   }
 }
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { registerUser } from '../services/auth.api'
+import { useAuth } from '../hooks/useAuth.js'
 
 const initialForm = {
   username: '',
@@ -11,11 +11,11 @@ const initialForm = {
 const Register = () => {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState({ type: '', message: '' })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { handleRegister, loading } = useAuth()
 
   const canSubmit = useMemo(
-    () => form.username.trim() && form.email.trim() && form.password.trim() && !isSubmitting,
-    [form.username, form.email, form.password, isSubmitting],
+    () => form.username.trim() && form.email.trim() && form.password.trim() && !loading,
+    [form.username, form.email, form.password, loading],
   )
 
   const handleChange = (event) => {
@@ -33,9 +33,7 @@ const Register = () => {
     }
 
     try {
-      setIsSubmitting(true)
-
-      const data = await registerUser({
+      const data = await handleRegister({
         username: form.username.trim(),
         email: form.email.trim(),
         password: form.password,
@@ -45,8 +43,6 @@ const Register = () => {
       setForm(initialForm)
     } catch (error) {
       setStatus({ type: 'error', message: error.message })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -131,8 +127,9 @@ const Register = () => {
               ) : null}
 
               <button className="auth-submit" type="submit" disabled={!canSubmit}>
-                <span>{isSubmitting ? 'Creating account' : 'Create account'}</span>
+                <span>{loading ? 'Creating account' : 'Create account'}</span>
                 <i aria-hidden="true" />
+                {loading ? <span className="auth-submit-spinner" aria-hidden="true" /> : null}
               </button>
             </form>
 

@@ -1,49 +1,23 @@
 import { useContext } from 'react'
-import { AuthContext } from '../context/AuthContext.jsx'
-import { loginUser, logoutUser, registerUser } from '../services/auth.api.js'
+import { AuthContext } from '../context/auth-context.js'
 
 export const useAuth = () => {
-  const { user, setUser, loading, setLoading } = useContext(AuthContext)
+  const auth = useContext(AuthContext)
 
-  const handleLogin = async ({ email, password }) => {
-    try {
-      setLoading(true)
-      const data = await loginUser({ email, password })
-      setUser(data.user)
-      return data
-    } finally {
-      setLoading(false)
-    }
+  if (!auth) {
+    throw new Error('useAuth must be used inside AuthProvider')
   }
 
-  const handleRegister = async ({ username, email, password }) => {
-    try {
-      setLoading(true)
-      const data = await registerUser({ username, email, password })
-      setUser(data.user)
-      return data
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    try {
-      setLoading(true)
-      await logoutUser()
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { user, setUser, loading, isAuthenticated, login, register, logout, refreshSession } = auth
 
   return {
     user,
     setUser,
     loading,
-    setLoading,
-    handleLogin,
-    handleRegister,
-    handleLogout,
+    isAuthenticated,
+    refreshSession,
+    handleLogin: login,
+    handleRegister: register,
+    handleLogout: logout,
   }
 }

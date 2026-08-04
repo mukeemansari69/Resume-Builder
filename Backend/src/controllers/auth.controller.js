@@ -6,7 +6,7 @@ const tokenBlacklistModel = require('../models/blacklist.model');
 
 
 function getJwtSecret() {
-  return process.env.JWT_SECRET;
+  return process.env.JWT_SECRET || process.env.JWT_SECRET_KEY;
 }
 
 /**

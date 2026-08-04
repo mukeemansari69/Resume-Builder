@@ -1,7 +1,6 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AuthContext } from './auth-context.js'
 import { clearAuthUser, getMe, getStoredAuthUser, loginUser, logoutUser, registerUser, saveAuthUser } from '../services/auth.api.js'
-
-export const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => getStoredAuthUser())
@@ -75,24 +74,39 @@ export const AuthProvider = ({ children }) => {
   }, [syncUser])
 
   useEffect(() => {
-    const handleAuthUpdate = () => {
-      syncUser(getStoredAuthUser())
-    }
+    let isMounted = true
+    const storedUser = getStoredAuthUser()
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('auth:updated', handleAuthUpdate)
-    }
-
-    refreshSession().catch(() => {
-      setUser(null)
-    })
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('auth:updated', handleAuthUpdate)
+    if (!storedUser) {
+      return () => {
+        isMounted = false
       }
     }
-  }, [refreshSession, syncUser])
+
+    const verifySession = async () => {
+      try {
+        const response = await getMe()
+
+        if (isMounted) {
+          syncUser(response?.user || storedUser)
+        }
+      } catch {
+        if (isMounted) {
+          syncUser(null)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    verifySession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [syncUser])
 
   const value = useMemo(() => ({
     user,
