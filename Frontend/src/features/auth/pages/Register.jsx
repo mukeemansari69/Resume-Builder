@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../hooks/useAuth.js'
 
 const initialForm = {
@@ -12,6 +12,7 @@ const Register = () => {
   const [form, setForm] = useState(initialForm)
   const [status, setStatus] = useState({ type: '', message: '' })
   const { handleRegister, loading } = useAuth()
+  const navigate = useNavigate()
 
   const canSubmit = useMemo(
     () => form.username.trim() && form.email.trim() && form.password.trim() && !loading,
@@ -41,6 +42,7 @@ const Register = () => {
 
       setStatus({ type: 'success', message: data.message || 'User registered successfully.' })
       setForm(initialForm)
+      navigate('/')
     } catch (error) {
       setStatus({ type: 'error', message: error.message })
     }

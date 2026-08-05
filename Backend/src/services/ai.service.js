@@ -119,14 +119,16 @@ const interviewReportSchema = z.object({
 
 async function generateInterviewReport({
     resume,
+    resumeText,
     selfDescription,
     jobDescription,
 }) {
+    const resumeContent = resumeText || resume;
     const prompt = `
 Generate an interview report for a candidate with the following details:
 
 Resume:
-${resume}
+${resumeContent}
 
 Self Description:
 ${selfDescription}
